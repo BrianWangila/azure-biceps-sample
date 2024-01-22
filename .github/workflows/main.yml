@@ -1,23 +1,49 @@
-on: [push]
+on:
+  push:
+    branches:
+      - main  # Update with your branch name if necessary
+
 name: Azure ARM
+
 jobs:
-    build-and-deploy:
-        runs-on: ubuntu-latest
-        steps:
-            # Checkout code
-            - uses: actions/checkout@main
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
-              # Log into Azure
-            - uses: azure/login@v1
-              with:
-                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+    steps:
+      # Checkout code
+      - name: Checkout Code
+        uses: actions/checkout@v2  # Updated to the latest version
 
-              # Deploy Bicep file
-            - name: deploy
-              uses: azure/arm-deploy@v1
-              with:
-                  subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
-                  resourceGroupName: ${{ secrets.AZURE_RG }}
-                  template: ./main.bicep
-                  parameters: storagePrefix=stg
-                  failOnStdErr: false
+      # Log into Azure
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Print Azure Account Info for debugging
+      - name: Print Azure Account Info
+        run: az account show
+
+      # Debugging information
+      - name: Debug Info
+        run: |
+          cat ./main.bicep
+          echo "Subscription ID: ${{ secrets.AZURE_SUBSCRIPTION }}"
+          echo "Resource Group: ${{ secrets.AZURE_RG }}"
+
+      # Use Azure CLI
+      - name: Use Azure CLI
+        uses: azure/cli@v1
+        with:
+          azcliversion: '2.30.0'  # Replace with the desired version
+
+      # Deploy Bicep file
+      - name: Deploy
+        uses: azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+          resourceGroupName: ${{ secrets.AZURE_RG }}
+          template: ./main.bicep
+          parameters: storagePrefix=stg
+          failOnStdErr: true  # Updated to fail on standard error
+          debug: true  # Enable debug output
